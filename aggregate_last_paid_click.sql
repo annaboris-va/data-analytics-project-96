@@ -46,7 +46,7 @@ select
 	utm_source,
 	utm_medium, 
 	utm_campaign,
-	count(visitor_id) as visitors_count,
+	count(distinct visitor_id) as visitors_count,
 	sum (total_cost),
 	count (lead_id) as leads_count,
 	sum (ranked_clicks.purchases) as purchases_count,

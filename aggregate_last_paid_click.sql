@@ -1,64 +1,64 @@
 with ranked_clicks as (
 select 
-	visitor_id,
+	s.visitor_id,
 	visit_date,
-	utm_source,
-	utm_medium,
-	utm_campaign,
-	case 
-		when visit_date <= created_at then visitor_id
-	else NULL
-	end as lead_id,
-	daily_spent,
-	case
-		when (closing_reason = 'Успешно реализовано' or status_id = 142) and lead_id is not null then 1
-	else 0
-	end as purchases,
+	source as utm_source,
+	medium as utm_medium, 
+	campaign as utm_campaign,
+	lead_id,
 	amount,
 	closing_reason,
 	status_id,
-	ROW_NUMBER() OVER (PARTITION BY visitor_id 
-            ORDER BY 
-                CASE
-                    WHEN  utm_source in ('cpc','cpm','cpa','youtube','cpp','tg','social') OR utm_medium in ('cpc','cpm','cpa','youtube','cpp','tg','social') THEN 1
-                    when utm_source is not null then 0
-                ELSE 0
-                END DESC, 
-                created_at DESC
+	ROW_NUMBER() OVER (PARTITION BY s.visitor_id 
+            ORDER BY date(created_at) DESC
         ) AS rn
 from sessions s
-left join leads l using (visitor_id)
-left join vk_ads va on s.source=va.utm_source 
-left join ya_ads ya using (utm_source,utm_medium,utm_campaign,daily_spent)
+left join leads l ON s.visitor_id = l.visitor_id AND s.visit_date <= l.created_at
+where medium<>'organic'
 ),
 spendings as (
 	select 
-		campaign_date, 
+		date(campaign_date) as campaign_date, 
 		utm_source, 
 		utm_medium,
-		sum (daily_spent) as total_cost
+		utm_campaign,
+		sum(daily_spent) as total_cost
 	from vk_ads 
-	full join ya_ads ya using (campaign_date, utm_source,utm_medium,daily_spent)
-	group by campaign_date, utm_source, utm_medium
-)
+	full join ya_ads ya using (campaign_date, utm_source,utm_medium,utm_campaign, daily_spent)
+	group by 1,2,3,4
+),
+agg_tab as (
 select
 	date (visit_date) as visit_date,
 	utm_source,
 	utm_medium, 
 	utm_campaign,
 	count(distinct visitor_id) as visitors_count,
-	sum (total_cost),
-	count (lead_id) as leads_count,
-	sum (ranked_clicks.purchases) as purchases_count,
-	sum(case 
-			when ranked_clicks.purchases = 1 then amount
-	else 0
-	end
-	) as revenue
+	count (distinct lead_id) as leads_count,
+	COUNT(distinct lead_id) FILTER (
+            WHERE closing_reason = 'Успешно реализовано'
+            OR status_id = 142
+        ) as purchases_count,
+	SUM(amount) AS revenue
 from ranked_clicks
-left join spendings using (utm_source, utm_medium)
-where rn = 1 and utm_source is not null
+where rn = 1
 group by date (visit_date), utm_source, utm_medium, utm_campaign
+order by revenue DESC nulls last, date (visit_date), visitors_count desc, utm_source, utm_medium, utm_campaign)
+
+select
+	visit_date,
+	agg_tab.utm_source,
+	agg_tab.utm_medium,
+	agg_tab.utm_campaign,
+	visitors_count,
+	total_cost,
+	leads_count,
+	purchases_count,
+	revenue
+from agg_tab
+left join spendings on agg_tab.utm_source = spendings.utm_source
+            AND agg_tab.utm_medium = spendings.utm_medium
+            AND agg_tab.utm_campaign = spendings.utm_campaign
+            AND agg_tab.visit_date = spendings.campaign_date
 order by revenue DESC nulls last, date (visit_date), visitors_count desc, utm_source, utm_medium, utm_campaign
-limit 15
 ;

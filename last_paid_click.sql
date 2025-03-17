@@ -34,5 +34,4 @@ select
 from ranked_clicks
 where rn = 1
 order by amount DESC nulls last, visit_date, utm_source, utm_medium, utm_campaign
-limit 10
 ;

@@ -83,14 +83,22 @@ left join leads l ON s.visitor_id = l.visitor_id AND s.visit_date <= l.created_a
 where medium<>'organic'
 ),
 spendings as (
-	select 
+		select 
 		date(campaign_date) as campaign_date, 
 		utm_source, 
 		utm_medium,
 		utm_campaign,
 		sum(daily_spent) as total_cost
 	from vk_ads 
-	full join ya_ads ya using (campaign_date, utm_source,utm_medium,utm_campaign, daily_spent)
+	group by 1,2,3,4
+union 
+	select 
+		date(campaign_date) as campaign_date, 
+		utm_source, 
+		utm_medium,
+		utm_campaign,
+		sum(daily_spent) as total_cost
+	from ya_ads 
 	group by 1,2,3,4
 ),
 agg_tab as (
@@ -99,11 +107,10 @@ select
 	utm_source,
 	utm_medium, 
 	utm_campaign,
-	count(distinct visitor_id) as visitors_count,
-	count (distinct lead_id) as leads_count,
-	COUNT(distinct lead_id) FILTER (
-            WHERE closing_reason = 'Успешно реализовано'
-            OR status_id = 142
+	count(visitor_id) as visitors_count,
+	count (lead_id) as leads_count,
+	COUNT(lead_id) FILTER (
+            WHERE status_id = 142
         ) as purchases_count,
 	SUM(amount) AS revenue
 from ranked_clicks
@@ -130,8 +137,6 @@ order by revenue DESC nulls last, date (visit_date), visitors_count desc, utm_so
 
 SELECT
     utm_source,
-    utm_medium,
-    utm_campaign,
     CASE
         WHEN SUM(visitors_count) = 0 THEN 0
         ELSE ROUND(SUM(total_cost) / SUM(visitors_count), 2)
@@ -148,8 +153,7 @@ SELECT
         100.0 * (SUM(revenue) - SUM(total_cost)) / SUM(total_cost), 2
     ) AS roi
 FROM tab
---WHERE utm_source IN ('vk', 'yandex')
-GROUP BY 1, 2, 3
+GROUP BY 1
 ;
 
 

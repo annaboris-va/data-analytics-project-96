@@ -24,7 +24,15 @@ spendings as (
 		utm_campaign,
 		sum(daily_spent) as total_cost
 	from vk_ads 
-	full join ya_ads ya using (campaign_date, utm_source,utm_medium,utm_campaign, daily_spent)
+	group by 1,2,3,4
+union 
+	select 
+		date(campaign_date) as campaign_date, 
+		utm_source, 
+		utm_medium,
+		utm_campaign,
+		sum(daily_spent) as total_cost
+	from ya_ads 
 	group by 1,2,3,4
 ),
 agg_tab as (
@@ -33,11 +41,10 @@ select
 	utm_source,
 	utm_medium, 
 	utm_campaign,
-	count(distinct visitor_id) as visitors_count,
-	count (distinct lead_id) as leads_count,
-	COUNT(distinct lead_id) FILTER (
-            WHERE closing_reason = 'Успешно реализовано'
-            OR status_id = 142
+	count(visitor_id) as visitors_count,
+	count (lead_id) as leads_count,
+	COUNT(lead_id) FILTER (
+            WHERE status_id = 142
         ) as purchases_count,
 	SUM(amount) AS revenue
 from ranked_clicks

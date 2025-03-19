@@ -1,23 +1,20 @@
 with ranked_clicks as (
 select 
-	visitor_id,
+	s.visitor_id,
 	visit_date,
 	source,
 	medium, 
 	campaign,
-	case 
-		when visit_date <= created_at then l.lead_id
-	else NULL
-	end as lead_id,
+	lead_id,
 	created_at,
 	amount,
 	closing_reason,
 	status_id,
-	ROW_NUMBER() OVER (PARTITION BY visitor_id 
+	ROW_NUMBER() OVER (PARTITION BY s.visitor_id 
             ORDER BY created_at DESC
         ) AS rn
 from sessions s
-full join leads l using (visitor_id)
+left join leads l ON s.visitor_id = l.visitor_id AND s.visit_date <= l.created_at
 where medium<>'organic'
 )
 select

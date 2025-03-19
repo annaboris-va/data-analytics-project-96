@@ -36,7 +36,7 @@ FROM tbl
 group by 1;
 
 
---конверсия из лида в оплату
+--конверсия из лида в оплату (подробно)
 WITH tbl AS (
     select
         s.source,
@@ -44,13 +44,13 @@ WITH tbl AS (
         s.campaign,
         COUNT(l.lead_id) AS leads_count,
         COUNT(l.lead_id) FILTER
-        (WHERE l.closing_reason = 'Успешная продажа' OR l.status_id = 142)
+        (WHERE l.status_id = 142)
         AS purchase_count
     FROM leads AS l
     LEFT JOIN sessions AS s
         using(visitor_id)
     WHERE s.medium != 'organic'
-    GROUP BY 1, 2, 3
+    GROUP BY 1,2,3
 )
 
 select
@@ -62,6 +62,29 @@ select
     ROUND(100.0 * purchase_count / leads_count, 2) AS cr
 FROM tbl
 ORDER BY 6 DESC;
+
+--конверсия из лида в оплату (кратко)
+WITH tbl AS (
+    select
+        s.source,
+        COUNT(l.lead_id) AS leads_count,
+        COUNT(l.lead_id) FILTER
+        (WHERE l.status_id = 142)
+        AS purchase_count
+    FROM leads AS l
+    LEFT JOIN sessions AS s
+        using(visitor_id)
+    WHERE s.medium != 'organic'
+    GROUP BY 1
+)
+
+select
+    source,
+    leads_count,
+    purchase_count,
+    ROUND(100.0 * purchase_count / leads_count, 2) AS cr
+FROM tbl
+ORDER BY 4 DESC;
 
 --CPU, CLP, CPPU, ROI
 with ranked_clicks as (

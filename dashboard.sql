@@ -99,7 +99,7 @@ select
 	closing_reason,
 	status_id,
 	ROW_NUMBER() OVER (PARTITION BY s.visitor_id 
-            ORDER BY date(created_at) DESC
+            ORDER BY visit_date DESC
         ) AS rn
 from sessions s
 left join leads l ON s.visitor_id = l.visitor_id AND s.visit_date <= l.created_at
@@ -188,6 +188,15 @@ select
 	utm_campaign,
 	sum (daily_spent) as total_cost
 from vk_ads 
-full join ya_ads ya using (campaign_date, utm_source,utm_medium,utm_campaign, daily_spent)
 group by 1,2,3,4
 order by 1
+union 
+	select 
+		date(campaign_date) as campaign_date, 
+		utm_source, 
+		utm_medium,
+		utm_campaign,
+		sum(daily_spent) as total_cost
+	from ya_ads 
+	group by 1,2,3,4
+order by 1;

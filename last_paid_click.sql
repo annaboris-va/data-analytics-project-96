@@ -11,7 +11,7 @@ select
 	closing_reason,
 	status_id,
 	ROW_NUMBER() OVER (PARTITION BY s.visitor_id 
-            ORDER BY created_at DESC
+            ORDER BY visit_date DESC
         ) AS rn
 from sessions s
 left join leads l ON s.visitor_id = l.visitor_id AND s.visit_date <= l.created_at
@@ -31,4 +31,5 @@ select
 from ranked_clicks
 where rn = 1
 order by amount DESC nulls last, visit_date, utm_source, utm_medium, utm_campaign
+--limit 10
 ;

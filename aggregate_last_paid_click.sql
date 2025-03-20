@@ -10,7 +10,7 @@ select
 	closing_reason,
 	status_id,
 	ROW_NUMBER() OVER (PARTITION BY s.visitor_id 
-            ORDER BY date(created_at) DESC
+            ORDER BY visit_date DESC
         ) AS rn
 from sessions s
 left join leads l ON s.visitor_id = l.visitor_id AND s.visit_date <= l.created_at
@@ -54,10 +54,10 @@ order by revenue DESC nulls last, date (visit_date), visitors_count desc, utm_so
 
 select
 	visit_date,
+	visitors_count,
 	agg_tab.utm_source,
 	agg_tab.utm_medium,
 	agg_tab.utm_campaign,
-	visitors_count,
 	total_cost,
 	leads_count,
 	purchases_count,
@@ -68,4 +68,5 @@ left join spendings on agg_tab.utm_source = spendings.utm_source
             AND agg_tab.utm_campaign = spendings.utm_campaign
             AND agg_tab.visit_date = spendings.campaign_date
 order by revenue DESC nulls last, date (visit_date), visitors_count desc, utm_source, utm_medium, utm_campaign
+--limit 15
 ;

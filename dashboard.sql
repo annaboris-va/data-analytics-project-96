@@ -101,7 +101,7 @@ WITH ranked_clicks AS (
     LEFT JOIN
         leads AS l
         ON s.visitor_id = l.visitor_id AND s.visit_date <= l.created_at
-    WHERE s.medium <> 'organic'
+    WHERE s.medium != 'organic'
 ),
 
 spendings AS (
@@ -186,21 +186,20 @@ GROUP BY 1;
 
 -- Затраты
 SELECT
-	campaign_date::date,
-	utm_source,
-	utm_medium,
-	utm_campaign,
-	sum(daily_spent) as total_cost
+    campaign_date::date,
+    utm_source,
+    utm_medium,
+    utm_campaign,
+    SUM(daily_spent) AS total_cost
 FROM vk_ads
 GROUP BY 1, 2, 3, 4
-ORDER BY 1
 UNION
 SELECT
 	campaign_date::date,
 	utm_source,
 	utm_medium,
 	utm_campaign,
-	sum(daily_spent) as total_cost
+	sum(daily_spent) AS total_cost
 FROM ya_ads
 GROUP BY 1, 2, 3, 4
 ORDER BY 1;

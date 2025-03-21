@@ -195,11 +195,11 @@ FROM vk_ads
 GROUP BY 1, 2, 3, 4
 UNION
 SELECT
-	campaign_date::date,
-	utm_source,
-	utm_medium,
-	utm_campaign,
-	sum(daily_spent) AS total_cost
+    campaign_date::date,
+    utm_source,
+    utm_medium,
+    utm_campaign,
+    SUM(daily_spent) AS total_cost
 FROM ya_ads
 GROUP BY 1, 2, 3, 4
 ORDER BY 1;

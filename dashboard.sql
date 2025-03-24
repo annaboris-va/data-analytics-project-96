@@ -138,7 +138,7 @@ agg_tab AS (
         SUM(amount) AS revenue
     FROM ranked_clicks
     WHERE rn = 1
-    GROUP BY 4, 1, 2, 3
+    GROUP BY 1, 2, 3, 4
     ORDER BY
         8 DESC NULLS LAST, 4, 5 DESC, 1 ASC, 2 ASC, 3 ASC
 ),

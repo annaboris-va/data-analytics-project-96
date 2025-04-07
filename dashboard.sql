@@ -203,3 +203,32 @@ SELECT
 FROM ya_ads
 GROUP BY 1, 2, 3, 4
 ORDER BY 1;
+
+--Закрытие 90% лидов
+WITH tab AS (
+    SELECT
+        s.visitor_id,
+        s.visit_date::date,
+        l.lead_id,
+        l.created_at::date,
+        source as utm_source,
+        l.created_at::date - s.visit_date::date AS days_passed,
+        NTILE(10) OVER (
+            ORDER BY l.created_at::date - s.visit_date::date
+        ) AS ntile
+    FROM sessions AS s
+    INNER JOIN leads AS l
+        ON s.visitor_id = l.visitor_id
+    WHERE
+        l.closing_reason = 'Успешная продажа'
+        AND s.visit_date::date <= l.created_at::date
+)
+
+SELECT
+	utm_source,
+	MIN(days_passed) AS min_days_passed,
+	ROUND(AVG(days_passed),0) as avg_days_passed,
+	MAX(days_passed) AS max_days_passed
+FROM tab
+WHERE ntile = 9
+GROUP BY 1;

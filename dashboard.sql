@@ -211,7 +211,7 @@ WITH tab AS (
         s.visit_date::date,
         l.lead_id,
         l.created_at::date,
-        source as utm_source,
+        s.source AS utm_source,
         l.created_at::date - s.visit_date::date AS days_passed,
         NTILE(10) OVER (
             ORDER BY l.created_at::date - s.visit_date::date
@@ -225,10 +225,10 @@ WITH tab AS (
 )
 
 SELECT
-	utm_source,
-	MIN(days_passed) AS min_days_passed,
-	ROUND(AVG(days_passed),0) as avg_days_passed,
-	MAX(days_passed) AS max_days_passed
+    utm_source,
+    MIN(days_passed) AS min_days_passed,
+    ROUND(AVG(days_passed), 0) as avg_days_passed,
+    MAX(days_passed) AS max_days_passed
 FROM tab
 WHERE ntile = 9
 GROUP BY 1;
